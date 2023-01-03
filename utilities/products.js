@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-export const validateProduct = (reqBody) => {
+export const validateProduct = (product) => {
   const schema = Joi.object({
     name: Joi.string().min(5).max(80).required(),
     brand: Joi.string().max(10),
@@ -45,7 +45,7 @@ export const validateProduct = (reqBody) => {
     for: Joi.alternatives().try(Joi.string(), Joi.array().items(Joi.string())),
   });
 
-  return schema.validate(reqBody);
+  return schema.validate(product);
 };
 
 export const handlingValidationErrors = (error, res, debug) => {

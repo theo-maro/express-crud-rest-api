@@ -1,14 +1,15 @@
 import fs from "fs";
 import path from "path";
 import * as url from "url";
-import express from "express";
 import config from "config";
 import logger from "morgan";
 import debug from "debug";
+import express from "express";
+import productsRouter from "./routes/products.js";
 
 const app = express();
 const PORT = process.env.PORT || config.get("port");
-const appDebugger = debug("app:db");
+export const appDebugger = debug("app:db");
 const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 // middleware
@@ -19,7 +20,6 @@ if (app.get("env") === "development") {
   appDebugger("Morgan logger enabled");
 }
 
-// TODO : save logs to a file
 if (app.get("env") === "production") {
   // create a write stream (in append mode)
   const accessLogStream = fs.createWriteStream(
@@ -37,6 +37,10 @@ app.get("/api", (req, res) => {
   res.send("GET request to the homepage");
 });
 
+// Product Router
+app.use("/api/products", productsRouter);
+
+// listening to incoming calls
 app.listen(PORT, (err) => {
   if (err) appDebugger(err);
   appDebugger(`Server is listening on port ${PORT}`);

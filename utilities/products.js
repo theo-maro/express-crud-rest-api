@@ -8,7 +8,7 @@ export const validateProduct = (product) => {
       .try(Joi.string(), Joi.array().items(Joi.string()))
       .required(),
     color: Joi.string(),
-    price: Joi.number().required(),
+    price: Joi.number(),
     monthly_price: Joi.number(),
     rating: Joi.number().min(0).max(5),
     limits: Joi.object({

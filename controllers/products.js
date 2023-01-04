@@ -19,7 +19,7 @@ export const createProduct = (req, res) => {
 
   // return response to client
   appDebugger(`A new product with id: "${product._id}" was added to database.`);
-  res.send(`"${product.name}" was added to the database.`);
+  res.status(201).send(`"${product.name}" was added to the database.`);
 };
 
 export const getProducts = (req, res) => {

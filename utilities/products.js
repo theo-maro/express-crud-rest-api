@@ -50,5 +50,5 @@ export const validateProduct = (product) => {
 
 export const handlingValidationErrors = (error, res, debug) => {
   debug(error);
-  return res.send(error.details[0].message);
+  return res.status(406).send(error.details[0].message);
 };

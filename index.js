@@ -32,13 +32,8 @@ if (app.get("env") === "production") {
   app.use(logger("combined"));
 }
 
-// homepage
-app.get("/api", (req, res) => {
-  res.send("GET request to the homepage");
-});
-
 // Product Router
-app.use("/api/products", productsRouter);
+app.use("/api", productsRouter);
 
 // listening to incoming calls
 app.listen(PORT, (err) => {

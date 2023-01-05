@@ -6,7 +6,7 @@ import {
 } from "../utilities/products.js";
 import { checkItemsInArray } from "../utilities/utilities.js";
 
-let products = [
+const products = [
   {
     name: "AC3 Phone",
     brand: "ACME",
@@ -152,6 +152,47 @@ let products = [
   },
 ];
 
+export const getProductIndex = (req, res) =>
+  res.send(
+    `Welcome to the "eShop Products" API!\n
+    => create new product
+          ::POST /api/products
+
+    => retrieve all products
+          ::GET /api/products
+
+    => retrieve nth products
+          ::GET /api/products?limit=50
+
+    => retrieve specific fields
+          ::GET /api/products?fields=name,brand,price,rating
+
+    => retrieve sorted products
+          ::GET /api/products?sort=price
+
+    => retrieve filtered products
+          ::GET /api/products?rating=3.8
+
+    => retrieve product
+          ::GET /api/products/:product_id
+
+    => retrieve specific fields
+          ::GET /api/products/:product_id?fields=name,availability
+
+    => update product
+          ::PATCH /api/products/:product_id
+
+    => delete product
+          ::DELETE /api/products/:product_id
+
+    => delete all product
+          ::DELETE /api/products
+    `
+  );
+
+export const notReached = (req, res) =>
+  res.send("You've tried reaching a route that doesn't exist.");
+
 export const createProduct = (req, res) => {
   // validate the user entries
   let product = req.body;
@@ -175,6 +216,11 @@ export const getProducts = (req, res) => {
     return res.status(200).send("No product was found!!");
   }
 
+  if (queryStringKeys.length === 0) {
+    appDebugger(`${products.length} products retrieved"`);
+    return res.status(302).send(products);
+  }
+
   // ** RETRIEVE LIMITED number of results
   if (checkItemsInArray(queryStringKeys, ["limit"])) {
     if (req.query.limit > products.length)
@@ -195,10 +241,13 @@ export const getProducts = (req, res) => {
     const newProducts = [];
     products.forEach((oldProduct) => {
       const newProduct = {};
-      fields.forEach((field) => {
-        newProduct[field] = oldProduct[field];
-      });
-      newProducts.push(newProduct);
+
+      for (const field of fields) {
+        if (Object.keys(oldProduct).includes(field)) {
+          newProduct[field] = oldProduct[field];
+          newProducts.push(newProduct);
+        }
+      }
     });
 
     appDebugger(`${newProducts.length} products retrieved"`);
@@ -223,10 +272,23 @@ export const getProducts = (req, res) => {
   }
 
   // FILTERING results
-  if (!checkItemsInArray(queryStringKeys, ["limit", "fields", "sort"])) {
-    //
-
-    if (queryStringKeys.length >= 4)
+  const allFields = [
+    "name",
+    "brand",
+    "type",
+    "price",
+    "monthly_price",
+    "rating",
+    "warranty_years",
+    "available",
+    "cancel_penalty",
+    "sales_tax",
+    "additional_tarriffs",
+    "limits",
+    "for",
+  ];
+  if (checkItemsInArray(allFields, queryStringKeys)) {
+    if (queryStringKeys.length > 1)
       return res.status(400).send("Exceed maximum number of query parameters");
 
     let filteredProduct = [];
@@ -244,13 +306,41 @@ export const getProducts = (req, res) => {
     appDebugger(`${filteredProduct.length} product found`);
     return res.status(200).send(filteredProduct);
   }
-
-  appDebugger(`${products.length} products retrieved"`);
-  res.status(302).send(products);
 };
 
 export const getProduct = (req, res) => {
-  res.send(`A product with id: ${req.params.id} was retrieved`);
+  const productFound = products.find((prod) => prod._id === req.params._id);
+  if (!productFound) {
+    appDebugger(`A product with id: ${req.params._id} does not exist`);
+    return res
+      .status(404)
+      .send(`A product with id: ${req.params._id} was not found`);
+  }
+
+  if (checkItemsInArray(Object.keys(req.query), ["fields"])) {
+    const fields = req.query.fields.split(",");
+    if (fields.length >= 7)
+      return res.status(400).send("Exceed maximum number of query parameters");
+
+    let newProduct = {};
+    for (const field of fields) {
+      newProduct[field] = productFound[field];
+
+      if (!newProduct[field]) {
+        appDebugger(
+          `[field not found] - A product with id: ${productFound._id} not retrieved`
+        );
+        return res.status(404).send(`Field "${field}" not found`);
+      }
+    }
+    newProduct = { ...newProduct, _id: productFound._id };
+
+    appDebugger(`A product with id: ${newProduct._id} was retrieved`);
+    return res.status(302).send(newProduct);
+  }
+
+  appDebugger(`A product with id: ${productFound._id} was retrieved`);
+  return res.status(302).send(productFound);
 };
 
 export const updateProduct = (req, res) => {

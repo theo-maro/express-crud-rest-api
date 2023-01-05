@@ -3,10 +3,11 @@ import { v4 as uuidV4 } from "uuid";
 import {
   validateProduct,
   handlingValidationErrors,
+  validateProductOnUpdate,
 } from "../utilities/products.js";
 import { checkItemsInArray } from "../utilities/utilities.js";
 
-const products = [
+let products = [
   {
     name: "AC3 Phone",
     brand: "ACME",
@@ -190,8 +191,10 @@ export const getProductIndex = (req, res) =>
     `
   );
 
-export const notReached = (req, res) =>
-  res.send("You've tried reaching a route that doesn't exist.");
+export const notReached = (req, res) => {
+  appDebugger(`reaching unexisted route - "${req.url}"`);
+  res.send(`"${req.url}" route doesn't exist.`);
+};
 
 export const createProduct = (req, res) => {
   // validate the user entries
@@ -344,13 +347,49 @@ export const getProduct = (req, res) => {
 };
 
 export const updateProduct = (req, res) => {
-  res.send(`A product with id: ${req.params.id} was updated`);
+  // check if  product exists
+  const productFound = products.find((prod) => prod._id === req.params._id);
+  if (!productFound) {
+    appDebugger(`A product with id: ${req.params._id} does not exist`);
+    return res
+      .status(404)
+      .send(`A product with id: ${req.params._id} was not found`);
+  }
+
+  // validate the user entries
+  const { error, value: validProduct } = validateProductOnUpdate(req.body);
+  if (error) handlingValidationErrors(error, res, appDebugger);
+
+  // update product
+  Object.keys(validProduct).forEach((props) => {
+    if (props) {
+      productFound[props] = validProduct[props];
+    }
+  });
+
+  res.send(`A product with id: ${productFound._id} was updated`);
 };
 
 export const deleteProduct = (req, res) => {
-  res.send(`A product with id: ${req.params.id} was deleted`);
+  const productFound = products.find((prod) => prod._id === req.params._id);
+  if (!productFound) {
+    appDebugger(`A product with id: ${req.params._id} does not exist`);
+    return res
+      .status(404)
+      .send(`A product with id: ${req.params._id} was not found`);
+  }
+
+  products = products.filter((product) => product._id !== req.params._id);
+
+  appDebugger(`A product with id: ${productFound._id} was deleted`);
+  res.send(`A product with id: ${productFound.name} was deleted`);
 };
 
 export const deleteProducts = (req, res) => {
-  res.send("All products were deleted");
+  let productCount = products.length;
+
+  products.splice(0);
+
+  appDebugger(`${productCount} products deleted`);
+  res.send(`${productCount} products deleted`);
 };

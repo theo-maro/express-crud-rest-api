@@ -43,7 +43,7 @@ $ git clone https://github.com/js4-me/express-crud-rest-api.git
 
 - on production enviroment
 
-  - To run the application in development mode, make sure to create `access.log` file to save all the logs
+  - To run the application in production mode, make sure to create `access.log` file to save all the logs
 
   ```zsh
   $ npm run prod
